@@ -90,11 +90,11 @@ class DialogueCharacter extends FlxSprite
 		#if MODS_ALLOWED
 		var path:String = Paths.modFolders(characterPath);
 		if (!FileSystem.exists(path)) {
-			path = Paths.getPreloadPath(characterPath);
+			path = Main.getDataPath() + Paths.getPreloadPath(characterPath);
 		}
 
 		if(!FileSystem.exists(path)) {
-			path = Paths.getPreloadPath('images/dialogue/' + DEFAULT_CHARACTER + '.json');
+			path = Main.getDataPath() + Paths.getPreloadPath('images/dialogue/' + DEFAULT_CHARACTER + '.json');
 		}
 		rawJson = File.getContent(path);
 
@@ -289,7 +289,8 @@ class DialogueBoxPsych extends FlxSpriteGroup
 		if(!dialogueEnded) {
 			bgFade.alpha += 0.5 * elapsed;
 			if(bgFade.alpha > 0.5) bgFade.alpha = 0.5;
-#if mobile
+
+			#if mobile
 		    var justTouched:Bool = false;
 
 		    for (touch in FlxG.touches.list)
@@ -303,32 +304,6 @@ class DialogueBoxPsych extends FlxSpriteGroup
 		    #end
 
 			if(PlayerSettings.player1.controls.ACCEPT#if mobile || justTouched #end) {
-				if(!daText.finishedText) {
-					if(daText != null) {
-						daText.killTheTimer();
-						daText.kill();
-						remove(daText);
-						daText.destroy();
-					}
-					daText = new Alphabet(DEFAULT_TEXT_X, DEFAULT_TEXT_Y, textToType, false, true, 0.0, 0.7);
-					add(daText);
-					
-					if(skipDialogueThing != null) {
-						skipDialogueThing();
-					}
-				} else if(currentText >= dialogueList.dialogue.length) {
-					dialogueEnded = true;
-					for (i in 0...textBoxTypes.length) {
-						var checkArray:Array<String> = ['', 'center-'];
-						var animName:String = box.animation.curAnim.name;
-						for (j in 0...checkArray.length) {
-							if(animName == checkArray[j] + textBoxTypes[i] || animName == checkArray[j] + textBoxTypes[i] + 'Open') {
-								box.animation.play(checkArray[j] + textBoxTypes[i] + 'Open', true);
-							}
-						}
-					}
-					
-			if(PlayerSettings.player1.controls.ACCEPT) {
 				if(!daText.finishedText) {
 					if(daText != null) {
 						daText.killTheTimer();
@@ -530,9 +505,6 @@ class DialogueBoxPsych extends FlxSpriteGroup
 
 		textToType = curDialogue.text;
 		daText = new Alphabet(DEFAULT_TEXT_X, DEFAULT_TEXT_Y, textToType, false, true, curDialogue.speed, 0.7);
-		daText.soundPath = fetchSound(curDialogue.portrait); //
-		FlxG.sound.cache(daText.soundPath);
-		//trace('Using sound: ' + daText.soundPath);
 		add(daText);
 
 		var char:DialogueCharacter = arrayCharacters[character];
@@ -550,40 +522,6 @@ class DialogueBoxPsych extends FlxSpriteGroup
 		if(nextDialogueThing != null) {
 			nextDialogueThing();
 		}
-	}
-
-	function fetchSound(name:String):String {
-		var sound:String = null;
-		//Audio loading from mods is not supported in Haxe, GFDI
-		/*#if (desktop && MODS_ALLOWED)
-		var paths:Array<String> = [
-			'mods/' + Paths.currentModDirectory + '/sounds/dialogue/$name.ogg',
-			'mods/sounds/dialogue/$name.ogg',
-			Paths.sound('dialogue/$name'),
-			'mods/' + Paths.currentModDirectory + '/sounds/dialogue.ogg',
-			'mods/sounds/dialogue.ogg',
-			Paths.sound('dialogue')
-		];
-		for (path in paths) {
-			//trace(path);
-			if (FileSystem.exists(path) || Assets.exists(path)) {
-				sound = path;
-				break;
-			}
-		}
-		#else*/
-		var paths:Array<String> = [
-			Paths.sound('dialogue/$name'),
-			Paths.sound('dialogue')
-		];
-		for (path in paths) {
-			if (Assets.exists(path)) {
-				sound = path;
-				break;
-			}
-		}
-		//#end
-		return sound;
 	}
 
 	public static function parseDialogue(path:String):DialogueFile {
@@ -624,7 +562,6 @@ class DialogueBoxPsych extends FlxSpriteGroup
 		return diag;
 	}
 	//
-
 	public static function updateBoxOffsets(box:FlxSprite) { //Had to make it static because of the editors
 		box.centerOffsets();
 		box.updateHitbox();
